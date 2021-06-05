@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property scope="context" name="patternDefault" value="%d{YYYY-MM-dd HH:mm:ss} [%t] %-5p %c:%L - %msg%n" />
+    <property scope="context" name="maxLogFileSize" value="10MB" />
+    <property scope="context" name="maxLogHistory" value="10" />
+
+    <appender name="appenderConsole" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${patternDefault}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="appenderFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/test.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/archive/test-%d{YYYYMMddHHmmss}-fargo-%i.log</fileNamePattern>
+            <maxFileSize>${maxLogFileSize}</maxFileSize>
+            <maxHistory>${maxLogHistory}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${patternDefault}</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="appenderConsole" />
+        <appender-ref ref="appenderFile" />
+    </root>
+
+</configuration>
