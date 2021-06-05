@@ -1,5 +1,6 @@
 Feature: Google translate
 
+  @demoTest
   Scenario: Translate French to English
     Given user is in google home page
     When user translates "Bonjour" a French word to English
