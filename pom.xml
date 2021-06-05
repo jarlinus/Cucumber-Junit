@@ -14,6 +14,7 @@
         <cucumber.version>5.6.0</cucumber.version>
         <selenium.version>3.141.59</selenium.version>
         <junit.version>4.12</junit.version>
+        <maven.cucumber.report.skip>false</maven.cucumber.report.skip>
     </properties>
 
     <dependencies>
@@ -87,6 +88,33 @@
                     <target>8</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>net.masterthought</groupId>
+                <artifactId>maven-cucumber-reporting</artifactId>
+                <version>5.0.0</version>
+                <executions>
+                    <execution>
+                        <id>execution</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <mergeFeaturesWithRetest>true</mergeFeaturesWithRetest>
+                            <jsonFiles>
+                                <param>**/*.json</param>
+                            </jsonFiles>
+                            <projectName>Cucumber-Demo-test</projectName>
+                            <skip>${maven.cucumber.report.skip}</skip>
+                            <outputDirectory>${project.build.directory}/cucumber-reports</outputDirectory>
+                            <inputDirectory>${project.build.directory}/cucumber-reports/cucumber-json-reports
+                            </inputDirectory>
+                            <checkBuildResult>true</checkBuildResult>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
