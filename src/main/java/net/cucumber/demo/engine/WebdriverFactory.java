@@ -81,7 +81,6 @@ public class WebdriverFactory {
         driver.manage().deleteAllCookies();
 
         EventFiringWebDriver eventDriver = new EventFiringWebDriver(driver);
-        eventDriver.register(new SeleniumEventHandler());
         return eventDriver;
     }
 
