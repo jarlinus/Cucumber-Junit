@@ -4,7 +4,7 @@ import io.cucumber.java.en.Given;
 import net.cucumber.demo.engine.TestContext;
 import net.cucumber.demo.pages.GoogleHomePage;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GoogleHomeSteps {
 
@@ -18,6 +18,6 @@ public class GoogleHomeSteps {
     public void userIsInGoogleHomePage() {
         GoogleHomePage googleHomePage = new GoogleHomePage(testContext.getDriver());
         googleHomePage.navigateTo();
-        assertTrue(googleHomePage.isLoaded());
+        assertTrue(googleHomePage.isLoaded(), "Google home page should be loaded");
     }
 }

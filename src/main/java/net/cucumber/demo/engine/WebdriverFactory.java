@@ -1,22 +1,23 @@
 package net.cucumber.demo.engine;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import net.cucumber.demo.Configuration;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.ie.InternetExplorerDriver;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.support.events.EventFiringWebDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 public class WebdriverFactory {
-    private static final String WEBDRIVER_CHROME_DRIVER = "webdriver.chrome.driver";
-    private static final String WEBDRIVER_FIREFOX_DRIVER = "webdriver.gecko.driver";
-    private static final String WEBDRIVER_IE_DRIVER = "webdriver.ie.driver";
+    private static final Logger logger = LoggerFactory.getLogger(WebdriverFactory.class);
     private static WebdriverFactory instance = new WebdriverFactory();
-    private Configuration configuration = Configuration.getInstance();
+    private final Configuration configuration = Configuration.getInstance();
     private final String browserName = configuration.getProperty("browser");
 
     public static WebdriverFactory getInstance() {
@@ -36,57 +37,86 @@ public class WebdriverFactory {
     }
 
     public DriverType getBrowserType() {
-        switch (browserName) {
-            case "local-chrome":
-            case "chrome":
-                return DriverType.CHROME;
-            case "local-firefox":
-            case "firefox":
-                return DriverType.FIREFOX;
-            case "local-ie":
-            case "iexplorer":
-            case "ie":
-                return DriverType.INTERNETEXPLORER;
-            default:
-                throw new IllegalArgumentException("Browser Name Key value in Configuration.properties is not matched : " + browserName);
-        }
+        return switch (browserName.toLowerCase()) {
+            case "chrome", "local-chrome" -> DriverType.CHROME;
+            case "firefox", "local-firefox" -> DriverType.FIREFOX;
+            case "edge", "local-edge" -> DriverType.EDGE;
+            default -> throw new IllegalArgumentException(
+                "Browser Name Key value in Configuration.properties is not matched : " + browserName);
+        };
     }
 
-
     private WebDriver createDriver(DriverType browserType, String testName) {
-        RemoteWebDriver driver = null;
-        switch (browserType) {
-            case FIREFOX:
-                System.setProperty(WEBDRIVER_FIREFOX_DRIVER, configuration.getProperty("webdriver.firefox.driver"));
-                driver = new FirefoxDriver();
-                driver.manage().window().maximize();
-                break;
-            case CHROME:
-                System.setProperty(WEBDRIVER_CHROME_DRIVER, configuration.getProperty("webdriver.chrome.driver"));
-                ChromeOptions options = new ChromeOptions();
-                options.setExperimentalOption("useAutomationExtension", false);
-                options.setCapability("acceptInsecureCerts", true);
-                options.setCapability("acceptSslCerts", true);
-                driver = new ChromeDriver(options);
-                driver.manage().window().maximize();
-                break;
-            case INTERNETEXPLORER:
-                System.setProperty(WEBDRIVER_IE_DRIVER, configuration.getProperty("webdriver.ie.driver"));
-                driver = new InternetExplorerDriver();
-                driver.manage().window().maximize();
-                break;
-        }
-        driver.manage().timeouts().implicitlyWait(Long.parseLong(configuration.getProperty("webdriver.implicit_wait", "20")), TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(Long.parseLong(configuration.getProperty("webdriver.timeout", "30")), TimeUnit.SECONDS);
-        driver.manage().deleteAllCookies();
+        WebDriver driver = switch (browserType) {
+            case FIREFOX -> createFirefoxDriver();
+            case CHROME -> createChromeDriver();
+            case EDGE -> createEdgeDriver();
+        };
 
-        EventFiringWebDriver eventDriver = new EventFiringWebDriver(driver);
-        return eventDriver;
+        configureDriver(driver);
+        logger.info("Created {} driver for test: {}", browserType, testName);
+        return driver;
+    }
+
+    private WebDriver createFirefoxDriver() {
+        WebDriverManager.firefoxdriver().setup();
+        FirefoxOptions options = new FirefoxOptions();
+        
+        // Add common options
+        if (configuration.getBooleanProperty("headless", false)) {
+            options.addArguments("--headless");
+        }
+        
+        WebDriver driver = new FirefoxDriver(options);
+        driver.manage().window().maximize();
+        return driver;
+    }
+
+    private WebDriver createChromeDriver() {
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions options = new ChromeOptions();
+        
+        // Modern Chrome options
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--remote-allow-origins=*");
+        
+        if (configuration.getBooleanProperty("headless", false)) {
+            options.addArguments("--headless=new");
+        }
+        
+        WebDriver driver = new ChromeDriver(options);
+        driver.manage().window().maximize();
+        return driver;
+    }
+
+    private WebDriver createEdgeDriver() {
+        WebDriverManager.edgedriver().setup();
+        EdgeOptions options = new EdgeOptions();
+        
+        if (configuration.getBooleanProperty("headless", false)) {
+            options.addArguments("--headless");
+        }
+        
+        WebDriver driver = new EdgeDriver(options);
+        driver.manage().window().maximize();
+        return driver;
+    }
+
+    private void configureDriver(WebDriver driver) {
+        // Set timeouts using Duration (Selenium 4 way)
+        int implicitWait = configuration.getIntProperty("webdriver.implicit_wait", 20);
+        int pageLoadTimeout = configuration.getIntProperty("webdriver.timeout", 30);
+        
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(implicitWait));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(pageLoadTimeout));
+        driver.manage().deleteAllCookies();
     }
 
     public enum DriverType {
         CHROME,
         FIREFOX,
-        INTERNETEXPLORER,
+        EDGE
     }
 }
