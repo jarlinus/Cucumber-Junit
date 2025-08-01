@@ -6,8 +6,8 @@ import net.cucumber.demo.engine.TestContext;
 import net.cucumber.demo.pages.GoogleHomePage;
 import net.cucumber.demo.pages.GoogleTranslatePage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GoogleTranslateSteps {
 
@@ -24,13 +24,15 @@ public class GoogleTranslateSteps {
         googleHomePage.selectGoogleProducts();
         googleHomePage.selectTranslate();
         GoogleTranslatePage googleTranslatePage = new GoogleTranslatePage(testContext.getDriver());
-        assertTrue(googleTranslatePage.isLoaded());
+        assertTrue(googleTranslatePage.isLoaded(), "Google Translate page should be loaded");
         googleTranslatePage.enterText(wordToBeTranslated);
     }
 
     @Then("the translated word {string} should be displayed")
     public void theTranslatedWordShouldBeDisplayed(String expectedTranslatedWord) {
         GoogleTranslatePage googleTranslatePage = new GoogleTranslatePage(testContext.getDriver());
-        assertEquals(googleTranslatePage.getTranslatedWord().trim(), expectedTranslatedWord);
+        String actualTranslatedWord = googleTranslatePage.getTranslatedWord().trim();
+        assertEquals(expectedTranslatedWord, actualTranslatedWord, 
+            "Expected translated word does not match actual translated word");
     }
 }
